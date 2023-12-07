@@ -10,7 +10,24 @@ from matplotlib import pyplot as plt
 def costly_function(x,i):
     # plot x[0]*sine(x[1]) from (-pi,pi)
     plt.plot(np.linspace(-2*np.pi,2*np.pi,100),x[0]*np.sin(np.linspace(-2*np.pi,2*np.pi,100)*x[1]))
-    plt.title("Parameter "+str(i))
+    # coupled dynamics
+    # a0 = 1
+    # a1 = 1
+    # a0_list = []
+    # a1_list = []
+    # for j in range(100):
+    #     a0_list.append(a0)
+    #     a1_list.append(a1)
+    #     a0 = a0 + x[0]*a1/1000
+    #     a1 = a1 + x[1]*a0/1000
+    # # a_list = np.array([a0_list,a1_list])
+    # plt.scatter(a0_list,a1_list)
+    # print(a0_list[-1])
+    # print(a1_list[-1])
+    if i == 0:
+        plt.title("Parameter amplitude")
+    else:
+        plt.title("Parameter frequency")
     plt.show()
     # collect user input
     y = input("Enter y value: ")
@@ -118,6 +135,9 @@ class BayesianOptimizer():
             ei_list = np.array(ei_list).reshape(1,-1)
             self._extend_prior_with_posterior_data(x_next_list,y_next_list)
             for j in range(self.num_dimensions):
+                self.belief_dists[j][0] = self.belief_dists[j][0]+np.mean(self.x_init[:,j])/(i+1)
+                self.belief_dists[j][1] = np.sqrt(self.belief_dists[j][1]**2+(np.std(self.x_init[:,j])/(i+1))**2)
+            for j in range(self.num_dimensions):
                 if y_next_list[0,j] > y_max_list[j]:
                     y_max_list[j] = y_next_list[0,j]
                     optimal_x_list[j] = x_next_list[0,j]
@@ -133,14 +153,9 @@ class BayesianOptimizer():
         
         return optimal_x_list, y_max_list
 #%%
-sample_x = np.array([[1,0.5]])
+sample_x = np.array([[0.1,0.1]])
 sample_y = np.array([[0.5,0.5]])
 # sample_y = costly_function(sample_x)
 bopt = BayesianOptimizer(target_func=costly_function, x_init=sample_x, y_init=sample_y, n_iter=10, scale=10, batch_size=30)
-bopt.optimize()
-#%%
-pd.DataFrame(bopt.distances_).plot()
-#%%
-bopt.best_samples_['y'].plot()
-#%%
-bopt.best_samples_['ei'].plot()
+optimal_x,y_max = bopt.optimize()
+print(optimal_x)
